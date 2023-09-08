@@ -16,10 +16,9 @@ class RandoHandler(RaceHandler):
     STANDARD_RACE_PERMALINK = "IQwAACADspoBUgAAAAAAABCK2CA="
     STANDARD_SPOILER_RACE_PERMALINK = "IwUAAAAAwsXwJQAAAAAAgAAAAAA="
 
-    def __init__(self, generator, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.generator = generator
         self.loop = asyncio.get_event_loop()
         self.loop_ended = False
         self.random = SystemRandom()
@@ -325,34 +324,25 @@ class RandoHandler(RaceHandler):
             (mode, perma) = self.state["draft"].make_selection()
             await self.send_message(f"Selected mode {mode}")
             self.state["permalink"] = perma
-        if self.state.get("version") is None:
-            generated_seed = self.generator.generate_seed(
-                self.state.get("permalink"), self.state.get("spoiler")
-            )
-            permalink = generated_seed.get("permalink")
-            hash = generated_seed.get("hash")
-            seed = generated_seed.get("seed")
-            version = generated_seed.get("version")
-        else:
-            version = self.state.get("version")
-            commit = version.split('_')[1]
-            seed_start = self.random.choice('123456789')
-            seed_end = "".join(self.random.choice(string.digits) for _ in range(17))
-            seed_name = seed_start + seed_end
-            permalink = f"{self.state.get('permalink')}#{seed_name}"
-            current_hash = hashlib.md5()
-            current_hash.update(str(seed_name).encode("ASCII"))
-            current_hash.update(permalink.encode("ASCII"))
-            current_hash.update(version.encode("ASCII"))
-            with urllib.request.urlopen(
-                    f"http://raw.githubusercontent.com/ssrando/ssrando/{commit}/names.txt"
-            ) as f:
-                data = f.read().decode("utf-8")
-                names = [s.strip() for s in data.split("\n")]
-            hash_random = random.Random()
-            hash_random.seed(current_hash.digest())
-            hash = " ".join(hash_random.choice(names) for _ in range(3))
-            seed = seed_name
+        version = self.state.get("version") or "2.0.0_b9f6c8"
+        commit = version.split('_')[1]
+        seed_start = self.random.choice('123456789')
+        seed_end = "".join(self.random.choice(string.digits) for _ in range(17))
+        seed_name = seed_start + seed_end
+        permalink = f"{self.state.get('permalink')}#{seed_name}"
+        current_hash = hashlib.md5()
+        current_hash.update(str(seed_name).encode("ASCII"))
+        current_hash.update(permalink.encode("ASCII"))
+        current_hash.update(version.encode("ASCII"))
+        with urllib.request.urlopen(
+                f"http://raw.githubusercontent.com/ssrando/ssrando/{commit}/names.txt"
+        ) as f:
+            data = f.read().decode("utf-8")
+            names = [s.strip() for s in data.split("\n")]
+        hash_random = random.Random()
+        hash_random.seed(current_hash.digest())
+        hash = " ".join(hash_random.choice(names) for _ in range(3))
+        seed = seed_name
 
         self.logger.info(permalink)
 
