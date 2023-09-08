@@ -4,6 +4,7 @@ WORKDIR /ss-rando-bot
 
 RUN apk add git
 
-COPY setup.py randobot .
+COPY setup.py .
+COPY randobot randobot
 
 RUN pip install -e .
