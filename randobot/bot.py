@@ -9,8 +9,6 @@ class RandoBot(Bot):
     """
 
     def __init__(self, *args, **kwargs):
-        Bot.racetime_host = "localhost:8000"
-        Bot.racetime_secure = False
         super().__init__(*args, **kwargs)
 
     def get_handler_class(self):
