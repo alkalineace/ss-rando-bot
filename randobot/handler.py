@@ -355,7 +355,7 @@ class RandoHandler(RaceHandler):
             )
 
     async def ex_rollseed(self, args, message):
-        print("rollseed")
+        print("rolling seed")
         if self.state.get("locked") and not can_monitor(message):
             await self.send_message(
                 "Seed rolling is locked! Only the creator of this room, a race monitor, "
@@ -385,7 +385,7 @@ class RandoHandler(RaceHandler):
         
         if len(args) > 1:
             self.state["version"] = message["message_plain"].split(" ")[1]
-        version = self.state.get("version") or self.versions[Latest]
+        version = self.state.get("version") or "2.0.0_4b67ad1"
         commit = version.split('_')[1]
         seed_start = self.random.choice('123456789')
         seed_end = "".join(self.random.choice(string.digits) for _ in range(17))
