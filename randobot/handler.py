@@ -150,6 +150,13 @@ class RandoHandler(RaceHandler):
             and message.get('message_plain', '').startswith('Welcome to Skyward Sword Randomizer!')
         ):
             self.state['pinned_msg'] = message.get('id')
+        elif (
+            message.get('is_bot')
+            and message.get('bot') == 'SS Rando Bot'
+            and message.get('is_pinned')
+            and message.get('message_plain', '').startswith(self.state["seed_message"])
+        ):
+            self.state['pinned_msg_seed'] = message.get('id')
         return await super().chat_message(data)
     
     # !breaks
@@ -321,17 +328,24 @@ class RandoHandler(RaceHandler):
         self.state["version"] = None
         self.state["draft"] = None
         self.state["break_set"] = False
-        self.state["break_duration"] = "5m"
-        self.state["break_interval"] = "2h"
+        self.state["break_duration"] = 5
+        self.state["break_interval"] = 120
         self.state["break_warning_sent"] = False
         self.state["break_in_progress"] = False
         self.state["last_break_time"] = None
         self.state["15_warning_sent"] = False
         self.state["5_warning_sent"] = False
         self.state["1_warning_sent"] = False
+        self.state["seed_message"] = None
         await self.send_message("The Seed has been reset.")
         if self.state.get("use_french"):
             await self.send_message("La Seed a été réinitialisée")
+
+        if self.state.get('pinned_msg_seed'):
+            await self.unpin_message(self.state['pinned_msg_seed'])
+
+        if self.state.get('pinned_msg'):
+            await self.pin_message(self.state['pinned_msg'])
 
     # !permalink
     # Sets the permalink used to roll the seed
@@ -589,12 +603,13 @@ class RandoHandler(RaceHandler):
 
         if self.state.get('pinned_msg'):
             await self.unpin_message(self.state['pinned_msg'])
-            del self.state['pinned_msg']
 
         self.state["permalink"] = permalink
         self.state["hash"] = hash
         self.state["seed"] = seed
         self.state["permalink_available"] = True
+
+        self.state["seed_message"] = f"{version} Permalink: {permalink}, Hash: {hash}"
 
         await self.send_message(f"{version} Permalink: {permalink}, Hash: {hash}", pinned=True)
 
