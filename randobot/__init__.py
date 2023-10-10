@@ -9,6 +9,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="SS RandoBot",
     )
+    parser.add_argument("ssr_api_key", type=str, help="ssrando.com API key")
     parser.add_argument("category_slug", type=str, help="racetime.gg category")
     parser.add_argument("client_id", type=str, help="racetime.gg client ID")
     parser.add_argument("client_secret", type=str, help="racetime.gg client secret")
@@ -36,6 +37,7 @@ def main():
         RandoBot.racetime_secure = False
 
     inst = RandoBot(
+        ssr_api_key=args.ssr_api_key,
         category_slug=args.category_slug,
         client_id=args.client_id,
         client_secret=args.client_secret,

@@ -33,8 +33,10 @@ class RandoHandler(RaceHandler):
         'Ghirahim asked me to give you this seed. Is that fine?'
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, website, **kwargs):
         super().__init__(**kwargs)
+
+        self.website = website
 
         self.loop = asyncio.get_event_loop()
         self.loop_ended = False
@@ -76,10 +78,10 @@ class RandoHandler(RaceHandler):
                                 options=self.versions,
                                 default="2.1.1_f389925"
                             ),
-                            msg_actions.TextInput(
-                                name='permalink',
-                                label='Permalink',
-                                placeholder='Paste your permalink here',
+                            msg_actions.SelectInput(
+                                name='preset',
+                                label='Preset',
+                                options={key: value['name'] for key, value in self.website.presets.items()}
                                 help_text='The permalink of the settings you want to use.'
                             )
                         )
