@@ -81,8 +81,8 @@ class RandoHandler(RaceHandler):
                             msg_actions.SelectInput(
                                 name='preset',
                                 label='Preset',
-                                options={key: value['name'] for key, value in self.website.presets.items()}
-                                help_text='The permalink of the settings you want to use.'
+                                options={key: value['name'] for key, value in self.website.presets.items()},
+                                default='weekly'
                             )
                         )
                     ),
