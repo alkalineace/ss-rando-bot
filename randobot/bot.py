@@ -9,9 +9,9 @@ class RandoBot(Bot):
     RandoBot base class.
     """
 
-    def __init__(self, ssr_api_key, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.website = Website(ssr_api_key)
+        self.website = Website()
 
     def get_handler_class(self):
         return RandoHandler

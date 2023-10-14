@@ -5,17 +5,14 @@ import requests
 class Website:
     preset_endpoint = 'https://ssrando.com/api/dynamicdata/racePresets'
 
-    def __init__(self, ssr_api_key):
-        self.ssr_api_key = ssr_api_key
+    def __init__(self):
         self.presets = self.load_presets()
 
     def load_presets(self):
         presets = requests.get(self.preset_endpoint).json()
-        
-        return {
-            key: {
-                'name': value['name'],
-                'settings': value['settings']
-            }
-            for key, value in presets.items()
-        }
+
+        preset_list = {}
+        for array in presets:
+            preset_list[array["data"]["settings"]] = array["data"]["name"]
+
+        return preset_list
