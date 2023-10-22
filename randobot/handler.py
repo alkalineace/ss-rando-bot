@@ -17,10 +17,6 @@ class RandoHandler(RaceHandler):
     STANDARD_RACE_PERMALINK = "IQwAACADspoBUgAAAAAAABCK2CA="
     STANDARD_SPOILER_RACE_PERMALINK = "IwUAAAAAwsXwJQAAAAAAgAAAAAA="
 
-    versions = {
-        "2.1.1_f389925": "Latest (2.1.1_f389925)"
-    }
-
     greetings = (
         'I can roll a seed for you, if motivated.',
         'You will get a nice seed. Promised!',
@@ -40,6 +36,9 @@ class RandoHandler(RaceHandler):
         
     # Called when opening the raceroom - setups a lot of things
     async def begin(self):
+        # Reload the presets on room creation
+        self.website.reload_presets()
+
         # Set seed rolling variables
         self.state["version"] = "2.1.1_f389925"
         self.state["permalink"] = "o13NyEgCAAAAAAAAIBjQgCiQT/Ae/v/N/P9jPwAA4P9/AAAA4AEAAAACAAAAAAAAAAAAAPgBAAAA/N8GKBABAAACsAAc/gBAAAg0Fg=="
@@ -71,20 +70,32 @@ class RandoHandler(RaceHandler):
                             msg_actions.SelectInput(
                                 name='version',
                                 label='Version',
-                                options=self.versions,
-                                default="2.1.1_f389925"
+                                options=self.website.versions
                             ),
                             msg_actions.SelectInput(
                                 name='preset',
                                 label='Preset',
-                                options=self.website.presets
+                                options=self.website.bit_presets
                             )
                         )
                     ),
                     msg_actions.Action(
-                        label='Roll weekly seed',
-                        help_text='Roll the weekly settings seed',
-                        message='!rollseed 2.1.1_f389925 o13NyEgCAAAAAAAAIBjQgCiQT/Ae/v/N/P9jPwAA4P9/AAAA4AEAAAACAAAAAAAAAAAAAPgBAAAA/N8GKBABAAACsAAc/gBAAAg0Fg=='
+                        label='Roll No-BiT seed',
+                        help_text='Create a seed where BiT is disabled with a specific version and permalink',
+                        message='!rollseed ${version} ${preset}',
+                        submit='Roll seed',
+                        survey=msg_actions.Survey(
+                            msg_actions.SelectInput(
+                                name='version',
+                                label='Version',
+                                options=self.website.versions
+                            ),
+                            msg_actions.SelectInput(
+                                name='preset',
+                                label='Preset',
+                                options=self.website.nobit_presets
+                            )
+                        )
                     ),
                     msg_actions.Action(
                         label='Version & Permalink',
