@@ -29,12 +29,12 @@ class Website:
         params = {'per_page': 5, 'page': 1}
         versions = requests.get(self.github_endpoint, params=params).json()
 
-        if versions.get('tag_name') is None:
-            return {"2.1.1_f389925": "Latest (2.1.1_f389925)"}
-
         tags = []
-        for array_version in versions:
-            tags.append(array_version['tag_name'])
+        try:
+            for array_version in versions:
+                tags.append(array_version['tag_name'])
+        except:
+            return {"2.1.1_f389925": "Latest (2.1.1_f389925)"}
 
         version_list = {}
         for tag in tags:
@@ -43,13 +43,10 @@ class Website:
             if tag[0] != 'v':
                 tag = "v" + tag
 
-            if hashes.get('object') is None:
+            try:
+                version = tag[1:] + "_" + hashes['object']['sha'][:7]
+            except:
                 return {"2.1.1_f389925": "Latest (2.1.1_f389925)"}
-            
-            if hashes['object'].get('sha') is None:
-                return {"2.1.1_f389925": "Latest (2.1.1_f389925)"}
-
-            version = tag[1:] + "_" + hashes['object']['sha'][:7]
 
             if version_list != {}:
                 version_list[version] = version
