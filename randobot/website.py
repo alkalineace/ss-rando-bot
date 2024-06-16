@@ -16,11 +16,16 @@ class Website:
 
         bit_preset_list = {}
         nobit_preset_list = {}
-        for array_preset in presets:
-            if array_preset['data'].get('bit') is None:
-                nobit_preset_list[array_preset["data"]["settings"]] = array_preset["data"]["name"]
-            else:
-                bit_preset_list[array_preset["data"]["settings"]] = array_preset["data"]["name"]
+
+        try:
+            for array_preset in presets:
+                if array_preset['data'].get('bit') is None:
+                    nobit_preset_list[array_preset["data"]["settings"]] = array_preset["data"]["name"]
+                else:
+                    bit_preset_list[array_preset["data"]["settings"]] = array_preset["data"]["name"]
+        except:
+            nobit_preset_list["gQ3IJkABAAAAAAAAYCCgAREAH8ApAMAb+f/HfgAAwP//AAAAAAAAADAEAAAAAAAAAAAAAPADAAAAAIANUCCCAwAEAAAg/AGIABLIngA="] = "No-bit S3 test settings"
+            bit_preset_list["gQ3IJkABAAAAAAAA4CCgAREAH8ApAMAb+f/HfgAAwP//AAAAAAAAADAEAAAAAAAAAAAAAPADAAAAAIANUCCCAwAEAAAg/AGIABLIngA="] = "S3 test settings"
 
         self.bit_presets = bit_preset_list
         self.nobit_presets = nobit_preset_list
@@ -30,13 +35,17 @@ class Website:
         versions = requests.get(self.github_endpoint, params=params).json()
 
         tags = []
+        version_list = {}
+        version_list["2.2.0_2b44d20"] = "S3 test build (2.2.0_2b44d20)"
+        version_list["2.2.0_71349dd"] = "Remlits Tournament (2.2.0_71349dd)"
+        version_list["2.2.0_20748a9"] = "Latest main (2.2.0_20748a9)"
+
         try:
             for array_version in versions:
                 tags.append(array_version['tag_name'])
         except:
-            return {"2.1.1_f389925": "Latest (2.1.1_f389925)"}
+            return version_list
 
-        version_list = {}
         for tag in tags:
             hashes = requests.get(self.sha_endpoint + tag).json()
 
@@ -46,7 +55,7 @@ class Website:
             try:
                 version = tag[1:] + "_" + hashes['object']['sha'][:7]
             except:
-                return {"2.1.1_f389925": "Latest (2.1.1_f389925)"}
+                return version_list
 
             if version_list != {}:
                 version_list[version] = version
