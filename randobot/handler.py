@@ -42,7 +42,6 @@ class RandoHandler(RaceHandler):
         # Set seed rolling variables
         self.state["version"] = "2.2.0_2b44d20"
         self.state["permalink"] = "gQ3IJkABAAAAAAAA4CCgAREAH8ApAMAb+f/HfgAAwP//AAAAAAAAADAEAAAAAAAAAAAAAPADAAAAAIANUCCCAwAEAAAg/AGIABLIngA="
-        self.state["spoiler"] = False
         self.state["draft"] = None
 
         # Breaks variables
@@ -55,6 +54,13 @@ class RandoHandler(RaceHandler):
         self.state["15_warning_sent"] = False
         self.state["5_warning_sent"] = False
         self.state["1_warning_sent"] = False
+
+        # Spoiler log timer variables
+        self.state["sl_timer"] = False
+        self.state["sl_timer_duration"] = 42
+        self.state["sl_deadline"] = None
+        self.state["sl_warnings"] = []
+        self.state["sl_timer_expired"] = False
 
         # First message with buttons to help roll a seed
         if not self.state.get("intro_sent") and not self._race_in_progress():
@@ -144,6 +150,38 @@ class RandoHandler(RaceHandler):
                         self.state["last_break_time"] = self.state.get("last_break_time") + timedelta(
                             0, 0, 0, 0, break_interval
                         )
+                if self.state.get("sl_deadline") is not None and self.state.get("sl_timer"):
+                    seconds_left_in_timer = self._get_seconds_left_in_sl_timer()
+
+                    if (30 not in self.state.get("sl_warnings")) and self.state.get("sl_timer_duration") >= 30 and seconds_left_in_timer <= 1800:
+                        await self.send_message("@entrants You have 30 minutes left for routing.")
+                        self.state["sl_warnings"].append(30)
+
+                    if (20 not in self.state.get("sl_warnings")) and self.state.get("sl_timer_duration") >= 20 and seconds_left_in_timer <= 1200:
+                        await self.send_message("@entrants You have 20 minutes left for routing.")
+                        self.state["sl_warnings"].append(20)
+
+                    if (10 not in self.state.get("sl_warnings")) and seconds_left_in_timer <= 600:
+                        await self.send_message("@entrants You have 10 minutes left for routing.")
+                        self.state["sl_warnings"].append(10)
+                    
+                    if (5 not in self.state.get("sl_warnings")) and seconds_left_in_timer <= 300:
+                        await self.send_message("@entrants You have 5 minutes left for routing. Please be ready to start playing soon.")
+                        self.state["sl_warnings"].append(5)
+                    
+                    if (1 not in self.state.get("sl_warnings")) and seconds_left_in_timer <= 60:
+                        await self.last_minute_sl_tasks()
+                        self.state["sl_warnings"].append(1)
+                    
+                    if not self.state.get("sl_timer_expired") and seconds_left_in_timer <= 0:
+                        self.state["sl_timer_expired"] = True
+                        if self._can_force_start_race():
+                            await self.send_message(
+                                "@entrants Routing time is over, the race will now be force started. Good luck!"
+                            )
+                            await self.force_start()
+                        else:
+                            await self.send_message("@entrants Error: Not enough runners were ready to force start the race!")
             except Exception:
                 pass
             finally:
@@ -245,25 +283,66 @@ class RandoHandler(RaceHandler):
         )
 
     # !log
-    # Sends the spoiler log of the seed in spoiler log races
-    async def ex_log(self, args, message):
-        if self.state.get("spoiler_url") and self.state.get("spoiler"):
-            url = self.state.get("spoiler_url")
-            await self.send_message(f"Spoiler Log can be found at {url}")
+    # Sends the spoiler log of the seed in spoiler log races - not currently supported
+    # async def ex_log(self, args, message):
+        # if self.state.get("spoiler_url") and self.state.get("spoiler"):
+        #   url = self.state.get("spoiler_url")
+        #   await self.send_message(f"Spoiler Log can be found at {url}")
 
     # !spoiler
-    # Enable or disable spoiler log race
+    # Activate a routing timer for spoiler log races.
     async def ex_spoiler(self, args, message):
-        spoiler = not self.state.get("spoiler")
-        self.state["spoiler"] = spoiler
-        if spoiler:
-            await self.send_message("Will create a public sharable Spoiler Log")
+        if self.state.get("locked") and not can_monitor(message):
+            await self.send_message(
+                "This command is locked! Only the creator of this room, a race monitor, "
+                "or a moderator can set up spoiler log timers."
+            )
             if self.state.get("use_french"):
-                await self.send_message("Un Spoiler Log public et partageable sera créé")
+                await self.send_message(
+                    "Cette commande est bloquée! Seul le créateur de la salle, un moniteur, "
+                    "ou un modérateur peut mettre un minuteur pour spoiler log."
+                )
+            return
+
+        if self.state.get("permalink_available"):
+            await self.send_message("The seed is already rolled! You must run this command before rolling a seed to start a timer.")
+            if self.state.get("use_french"):
+                await self.send_message(
+                    "La seed a déjà été générée! Il faut utiliser cette commande avant de générer une seed pour démarrer un minuteur."
+                )
+            return
+        if len(args) == 0:
+            self.state["sl_timer"] = True
+            # Default length
+            self.state["sl_timer_duration"] = 42
+            await self.send_message(f"Will set a {self.state.get('sl_timer_duration')}-minute timer for routing when the seed is rolled.")
+            if self.state.get("use_french"):
+                await self.send_message(f"Un minuteur de {self.state.get('sl_timer_duration')} minutes pour routage sera mis quand la seed sera générée.")
+        elif args[0] == "off":
+            self.state["sl_timer"] = False
+            await self.send_message("Will NOT set a timer for routing.")
+            if self.state.get("use_french"):
+                await self.send_message("Il n'y aura PAS un minuteur pour routage.")
         else:
-            await self.send_message("Will NOT create a public sharable Spoiler Log")
+            timer_duration = args[0]
+
+            try:
+                timer_duration = max(10, int(timer_duration))
+            except (TypeError, ValueError):
+                await self.send_message(f"{timer_duration} is not a valid time.")
+                return
+
+            self.state["sl_timer"] = True
+            self.state["sl_timer_duration"] = timer_duration
+            await self.send_message(
+                f"Will set a {self.state.get('sl_timer_duration')}-minute timer for routing when the seed is rolled. "
+                "Race admin(s), please remember to turn auto-start OFF so all entrants can ready up."
+            )
             if self.state.get("use_french"):
-                await self.send_message("Un Spoiler Log public et partageable ne sera PAS crée")
+                await self.send_message(
+                    f"Un minuteur de {self.state.get('sl_timer_duration')} minutes pour routage sera mis quand la seed sera générée."
+                    "Les administrateurs de race, désactiver le mode de démarrage automatique afin les participants peuvent se préparer, s'il vous plaît."
+                )
 
     # !info
     # Prints the version and permalink currently set
@@ -275,14 +354,21 @@ class RandoHandler(RaceHandler):
         else:
             response += f"Version: {self.state.get('version')} "
         response += f"Permalink: {self.state.get('permalink')} "
-        if self.state.get("spoiler"):
-            response += "Spoiler log will be generated and a link will be provided. "
-        else:
-            response += "Spoiler log will not be generated. "
-        if self.state.get("peramlink_available"):
+        if self.state.get("permalink_available"):
             response += "Seed has been rolled. Get it with !permalink. "
+            if self.state.get("sl_timer"):
+                if (seconds_left := self._get_seconds_left_in_sl_timer()) <= 0:
+                    response += "The spoiler log routing timer has expired. "
+                else:
+                    response += f"The spoiler log routing timer will expire in {self._get_formatted_duration_str(seconds_left)}. "
+            else:
+                response += "No spoiler log routing timer is set. "
         else:
             response += "Seed not rolled. Roll with !rollseed. "
+            if self.state.get("sl_timer"):
+                response += f"A {self.state.get('sl_timer_duration')}-minute routing timer will be set when the seed is rolled. "
+            else:
+                response += "No spoiler log routing timer will be set. "
         await self.send_message(response)
 
     # !seed
@@ -332,7 +418,11 @@ class RandoHandler(RaceHandler):
         self.state["seed"] = None
         self.state["hash"] = None
         self.state["permalink_available"] = False
-        self.state["spoiler"] = False
+        self.state["sl_timer"] = False
+        self.state["sl_timer_duration"] = 42
+        self.state["sl_deadline"] = None
+        self.state["sl_warnings"] = []
+        self.state["sl_timer_expired"] = False
         self.state["spoiler_url"] = None
         self.state["version"] = None
         self.state["draft"] = None
@@ -620,11 +710,20 @@ class RandoHandler(RaceHandler):
 
         self.state["seed_message"] = f"{version} Permalink: {permalink}, Hash: {hash}"
 
-        await self.send_message(f"{version} Permalink: {permalink}, Hash: {hash}", pinned=True)
+        if self.state.get("sl_timer"):
+            self.state["sl_deadline"] = datetime.now(timezone.utc) + timedelta(0,self.state.get('sl_timer_duration') * 60)
+            self.state["seed_message"] += f", Force start at {self.state.get('sl_deadline').strftime('%H:%M:%S')} UTC"
 
-        # Need to think about how to handle Spoiler log races
+        await self.send_message(self.state.get("seed_message"), pinned=True)
 
-        # if self.state.get("spoiler"):
+        if self.state.get("sl_timer"):
+            self.state["seed_roll_time"] = datetime.now(timezone.utc)
+            await self.send_message(
+                f"A {self.state.get('sl_timer_duration')}-minute timer has been set. "
+                "Please ready up before the timer expires, as the race will be force started when the timer expires "
+                f"(at {self.state.get('sl_deadline').strftime('%H:%M:%S')} UTC)."
+            )
+
         #     url = generated_seed.get("spoiler_log_url")
         #     self.state["spoiler_url"] = url
         #     await self.send_message(f"Spoiler Log URL available at {url}")
@@ -643,6 +742,16 @@ class RandoHandler(RaceHandler):
                 False,
                 False,
             )
+    
+    async def last_minute_sl_tasks(self):
+        filename_start = self.random.choice('123456789')
+        filename_end = "".join(self.random.choice(string.digits) for _ in range(5))
+        filename = filename_start + filename_end
+        await self.send_message(f"@entrants The race will start in one minute. Please use the filename '{filename}'. ")
+        for entrant in self.data.get("entrants"):
+            if (entrant.get("status").get("value") == "not_ready"):
+                await self.send_message(f"@{entrant.get('user').get('name')}, please ready up!")
+        
 
     # Returns True is race is ongoing
     def _race_in_progress(self):
@@ -656,6 +765,13 @@ class RandoHandler(RaceHandler):
         seconds_since_last_break = (datetime.now(timezone.utc) - self.state.get("last_break_time")).total_seconds()
         return (self.state.get("break_interval") * 60) - seconds_since_last_break
     
+    # Returns time left in the timer before race start in spoiler log races
+    def _get_seconds_left_in_sl_timer(self):
+        if not self.state.get("permalink_available"):
+            return 0
+
+        return (self.state.get("sl_deadline") - datetime.now(timezone.utc)).total_seconds()
+    
     def _get_formatted_duration_str(self, duration_in_seconds):
         if duration_in_seconds < 0:
             return "Invalid time"
@@ -668,17 +784,17 @@ class RandoHandler(RaceHandler):
 
         formatted_str = []
         if hours != 0:
-            hours_string = f"{hours} hour"
+            hours_string = f"{int(hours)} hour"
             if hours > 1:
                 hours_string += "s"
             formatted_str.append(hours_string)
         if minutes != 0:
-            minutes_string = f"{minutes} minute"
+            minutes_string = f"{int(minutes)} minute"
             if minutes > 1:
                 minutes_string += "s"
             formatted_str.append(minutes_string)
         if seconds != 0:
-            seconds_string = f"{seconds} second"
+            seconds_string = f"{int(seconds)} second"
             if seconds > 1:
                 seconds_string += "s"
             formatted_str.append(seconds_string)
@@ -690,3 +806,11 @@ class RandoHandler(RaceHandler):
             return f"{formatted_str[0]} and {formatted_str[1]}"
         else:
             return formatted_str[0]
+    
+    def _can_force_start_race(self):
+        num_ready = 0
+        for entrant in self.data.get("entrants"):
+            if (entrant.get("status").get("value") == "ready"):
+                num_ready += 1
+        # cannot force start a race with less than 2 entrants ready.
+        return num_ready >= 2
