@@ -24,8 +24,8 @@ class Website:
                 else:
                     bit_preset_list[array_preset["data"]["settings"]] = array_preset["data"]["name"]
         except:
-            nobit_preset_list["gQ3IJkABAAAAAAAAYCCgAREAH8ApAMAb+f/HfgAAwP//AAAAAAAAADAEAAAAAAAAAAAAAPADAAAAAIANUCCCAwAEAAAg/AGIABLIngA="] = "No-bit S3 test settings"
-            bit_preset_list["gQ3IJkABAAAAAAAA4CCgAREAH8ApAMAb+f/HfgAAwP//AAAAAAAAADAEAAAAAAAAAAAAAPADAAAAAIANUCCCAwAEAAAg/AGIABLIngA="] = "S3 test settings"
+            nobit_preset_list["kV3MJkABAAAAAAAAgEBAA0QBfAKnAABv5v8f+wEAAP//AwAAAAAAAMAQAAAAAAAAAAAAAMAPAAAAAAA2QIEIDgAQgACA8AcgAkigfDo="] = "No-bit Season 3"
+            bit_preset_list["kV3MJkABAAAAAAAAgEFAA0QBfAKnAABv5v8f+wEAAP//AwAAAAAAAMAQAAAAAAAAAAAAAMAPAAAAAAA2QIEIDgAQgACA8AcgAkigfDo="] = "Season 3"
 
         self.bit_presets = bit_preset_list
         self.nobit_presets = nobit_preset_list
@@ -36,7 +36,7 @@ class Website:
 
         tags = []
         version_list = {}
-        version_list["2.2.0_2b44d20"] = "S3 test build (2.2.0_2b44d20)"
+        version_list["2.2.0_bd9ed41"] = "Season 3 (2.2.0_bd9ed41)"
         version_list["2.2.0_71349dd"] = "Remlits Tournament (2.2.0_71349dd)"
         version_list["2.2.0_20748a9"] = "Latest main (2.2.0_20748a9)"
 

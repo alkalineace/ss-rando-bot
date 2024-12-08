@@ -40,8 +40,8 @@ class RandoHandler(RaceHandler):
         self.website.reload_presets()
 
         # Set seed rolling variables
-        self.state["version"] = "2.2.0_2b44d20"
-        self.state["permalink"] = "gQ3IJkABAAAAAAAA4CCgAREAH8ApAMAb+f/HfgAAwP//AAAAAAAAADAEAAAAAAAAAAAAAPADAAAAAIANUCCCAwAEAAAg/AGIABLIngA="
+        self.state["version"] = "2.2.0_bd9ed41"
+        self.state["permalink"] = "kV3MJkABAAAAAAAAgEFAA0QBfAKnAABv5v8f+wEAAP//AwAAAAAAAMAQAAAAAAAAAAAAAMAPAAAAAAA2QIEIDgAQgACA8AcgAkigfDo="
         self.state["draft"] = None
 
         # Breaks variables
@@ -676,7 +676,7 @@ class RandoHandler(RaceHandler):
         
         if len(args) > 1:
             self.state["version"] = message["message_plain"].split(" ")[1]
-        version = self.state.get("version") or "2.2.0_2b44d20"
+        version = self.state.get("version") or "2.2.0_bd9ed41"
         commit = version.split('_')[1]
         seed_start = self.random.choice('123456789')
         seed_end = "".join(self.random.choice(string.digits) for _ in range(17))
