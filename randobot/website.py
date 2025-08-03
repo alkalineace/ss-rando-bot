@@ -36,6 +36,7 @@ class Website:
 
         tags = []
         version_list = {}
+        version_list["2.2.0_c0ee5ad"] = "Co-op Season 2 (2.2.0_c0ee5ad)"
         version_list["2.2.0_bd9ed41"] = "Season 3 (2.2.0_bd9ed41)"
         version_list["2.2.0_71349dd"] = "Remlits Tournament (2.2.0_71349dd)"
         version_list["2.2.0_20748a9"] = "Latest main (2.2.0_20748a9)"
@@ -70,4 +71,5 @@ class Website:
 
         if temp is not {}:
             print("successfully recovered presets")
+
             self.presets = temp
